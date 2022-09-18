@@ -1,4 +1,5 @@
 ﻿using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,8 +15,13 @@ namespace TransactionServiceTest
         [Fact]
         public void GivenNoTransaction_ThenReturnEmpty()
         {
-            // arrange 
-            TransactionRepository repository = new TransactionRepository();
+            // arrange
+
+            var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>()
+                .UseInMemoryDatabase(Guid.NewGuid().ToString());
+            var dbContext = new AppDbContext(optionsBuilder.Options);
+
+            TransactionRepository repository = new TransactionRepository(dbContext);
 
             // act
             var result = repository.GetAllTransactions();
