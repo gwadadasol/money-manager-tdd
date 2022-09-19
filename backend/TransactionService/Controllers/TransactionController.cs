@@ -25,12 +25,23 @@ public class TransactionController : ControllerBase
     [HttpGet(ApiRoutes.Transaction.GetAll)]
     public ActionResult<List<Transaction>> GetAll()
     {
-        return _service.GetAllTransactions();
+        try
+        {
+            var result = _service.GetAllTransactions();
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            return BadRequest(ex.Message);
+        }
     }
 
     [HttpPost(ApiRoutes.Transaction.Create)]
-    public void Post(Transaction transaction)
+    public ActionResult<List<Transaction>> Post(Transaction transaction)
     {
         _service.AddTransaction(transaction);
-    }
+        return Ok();
+
+}
 }

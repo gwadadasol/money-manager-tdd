@@ -9,20 +9,26 @@ using Xunit;
 namespace TransactionServiceTest
 {
     public class TransactionServiceTest
-    {
+    { 
+        private Mock<ITransactionRepository> _repository;
+        private readonly TransactionSrvc _transactionService;
+
+        public TransactionServiceTest()
+        {
+            _repository = new Mock<ITransactionRepository>();
+
+            _transactionService = new TransactionSrvc(_repository.Object);
+
+        }
+
         [Fact]
         public void GivenNoTransaction_ThenReturnEmptyList()
         {
             // arrange 
-            Mock<ITransactionRepository> repository = new Mock<ITransactionRepository>();
-
-            TransactionSrvc transactionService = new TransactionSrvc(repository.Object);
-
-            repository.Setup(x => x.GetAllTransactions()).Returns(new List<Transaction>());
-
+            _repository.Setup(x => x.GetAllTransactions()).Returns(new List<Transaction>());
 
             // act
-            var result = transactionService.GetAllTransactions();
+            var result = _transactionService.GetAllTransactions();
 
             // assert
             result.Should().HaveCount(0);
@@ -34,13 +40,10 @@ namespace TransactionServiceTest
             // arrange 
             var transaction = AutoFaker.Generate<Transaction>();
             
-            Mock<ITransactionRepository> repository = new Mock<ITransactionRepository>();
-            repository.Setup(x => x.GetAllTransactions()).Returns(new List<Transaction>() { transaction });
-
-            TransactionSrvc transactionService = new TransactionSrvc(repository.Object);
+            _repository.Setup(x => x.GetAllTransactions()).Returns(new List<Transaction>() { transaction });
 
             // act
-            var result = transactionService.GetAllTransactions();
+            var result = _transactionService.GetAllTransactions();
 
             // assert
             result.Should().HaveCount(1);
@@ -51,15 +54,11 @@ namespace TransactionServiceTest
         {
             // arrange 
             var transaction = AutoFaker.Generate<Transaction>();
-
-            Mock<ITransactionRepository> repository = new Mock<ITransactionRepository>();
-            repository.Setup(x => x.GetAllTransactions()).Returns(new List<Transaction>() { transaction });
-
-            TransactionSrvc transactionService = new TransactionSrvc(repository.Object);
+            _repository.Setup(x => x.GetAllTransactions()).Returns(new List<Transaction>() { transaction });
 
             // act
-            transactionService.AddTransaction(transaction);
-            var result = transactionService.GetAllTransactions();
+            _transactionService.AddTransaction(transaction);
+            var result = _transactionService.GetAllTransactions();
 
             // assert
             result.Should().HaveCount(1);

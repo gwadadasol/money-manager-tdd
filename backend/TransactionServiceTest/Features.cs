@@ -1,6 +1,8 @@
 ﻿using AutoBogus;
 using FluentAssertions;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Moq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,33 +17,70 @@ namespace TransactionServiceTest
 {
     public class Features
     {
-        [Fact]
-        public void GivenASetofTransactionPost_WhenCallGetAll_ThenRetriveAllTransactions()
-        {
+        private readonly TransactionController _controller;
 
+        public Features()
+        {
             var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>()
-                .UseInMemoryDatabase(Guid.NewGuid().ToString());
+    .UseInMemoryDatabase(Guid.NewGuid().ToString());
             var dbContext = new AppDbContext(optionsBuilder.Options);
 
             TransactionRepository repository = new TransactionRepository(dbContext);
             TransactionSrvc service = new TransactionSrvc(repository);
-            TransactionController controller = new TransactionController(service);
+            _controller = new TransactionController(service);
+
+        }
+        [Fact]
+        public void GivenASetofTransactionRegistered_WhenCallGetAllTransactions_ThenRetrieveAllTransactions()
+        {
             Transaction transaction1 = AutoFaker.Generate<Transaction>();
             Transaction transaction2 = AutoFaker.Generate<Transaction>();
 
-            controller.Post(transaction1 );
-            controller.Post(transaction2);
+            _controller.Post(transaction1);
+            _controller.Post(transaction2);
+
+            var transactions = _controller.GetAll() ;
+            transactions.Should().NotBeNull();
+
+            var result = transactions.Result as OkObjectResult;
+            result.StatusCode.Should().Be(200);
+            result.Value.Should().NotBeNull();
+
+            var value = result.Value as List<Transaction>;
+            value.Should().HaveCount(2);
+            value[0].Should().NotBeNull();
+            value[1].Should().NotBeNull();
+            value[0].Should().Be(transaction1);
+            value[1].Should().Be(transaction2);
+        }
+
+        [Fact]
+        public void GivenNoTransactionRegistered_WhenCallGetAllTransactions_ThenRetrieveNoTransaction()
+        {
+            var transactions = _controller.GetAll();
+            transactions.Should().NotBeNull();
+
+            var result = transactions.Result as OkObjectResult;
+            result.StatusCode.Should().Be(200);
+            result.Value.Should().NotBeNull();
+
+            var value = result.Value as List<Transaction>;
+            value.Should().HaveCount(0);
+        }
+        [Fact]
+        public void GivenException_WhenCallGetAllTransactions_ThenReturnErrorBadRequest()
+        {
+            Mock<ITransactionSrvc> service = new Mock<ITransactionSrvc>();
+            service.Setup(f => f.GetAllTransactions()).Throws(new Exception());
+            TransactionController controller = new TransactionController(service.Object);
 
             var transactions = controller.GetAll();
+            transactions.Should().NotBeNull();
 
-            transactions.Value.Should().NotBeNull();
-            transactions.Value.Should().HaveCount(2);
-            transactions.Value[0].Should().NotBeNull(); 
-            transactions.Value[1].Should().NotBeNull();
-            transactions.Value[0].Should().Be(transaction1);
-            transactions.Value[1].Should().Be(transaction2);
-
-
+            var result = transactions.Result as ObjectResult;
+            result.StatusCode.Should().Be(400);
         }
+
+
     }
 }
