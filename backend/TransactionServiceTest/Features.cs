@@ -33,20 +33,26 @@ namespace TransactionServiceTest
         [Fact]
         public void GivenASetofTransactionRegistered_WhenCallGetAllTransactions_ThenRetrieveAllTransactions()
         {
+            // arrange
             Transaction transaction1 = AutoFaker.Generate<Transaction>();
             Transaction transaction2 = AutoFaker.Generate<Transaction>();
 
             _controller.Post(transaction1);
             _controller.Post(transaction2);
 
+            // act
             var transactions = _controller.GetAll() ;
+
+            // assert
             transactions.Should().NotBeNull();
 
             var result = transactions.Result as OkObjectResult;
+            result.Should().NotBeNull(); 
             result.StatusCode.Should().Be(200);
             result.Value.Should().NotBeNull();
 
             var value = result.Value as List<Transaction>;
+            value.Should().NotBeNull(); 
             value.Should().HaveCount(2);
             value[0].Should().NotBeNull();
             value[1].Should().NotBeNull();
@@ -57,27 +63,39 @@ namespace TransactionServiceTest
         [Fact]
         public void GivenNoTransactionRegistered_WhenCallGetAllTransactions_ThenRetrieveNoTransaction()
         {
+            //arrange 
+
+            // act
             var transactions = _controller.GetAll();
+
+            // assert
             transactions.Should().NotBeNull();
 
             var result = transactions.Result as OkObjectResult;
+            result.Should().NotBeNull();
             result.StatusCode.Should().Be(200);
             result.Value.Should().NotBeNull();
 
             var value = result.Value as List<Transaction>;
+            value.Should().NotBeNull();
             value.Should().HaveCount(0);
         }
         [Fact]
         public void GivenException_WhenCallGetAllTransactions_ThenReturnErrorBadRequest()
         {
+            // arrange
             Mock<ITransactionSrvc> service = new Mock<ITransactionSrvc>();
             service.Setup(f => f.GetAllTransactions()).Throws(new Exception());
             TransactionController controller = new TransactionController(service.Object);
 
+            // act
             var transactions = controller.GetAll();
+
+            // assert
             transactions.Should().NotBeNull();
 
             var result = transactions.Result as ObjectResult;
+            result.Should().NotBeNull();
             result.StatusCode.Should().Be(400);
         }
 
